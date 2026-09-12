@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>100 Amanecidos Dicen</title>
+<style>
+/* =====================================================================
+   100 AMANECIDOS DICEN
+   Juego de preguntas y respuestas para el Día del Profesor
+   Instituto Amanecer - 5to Año Pre Promo 2027
+   ---------------------------------------------------------------------
+   Todo el juego vive en este único archivo (HTML + CSS + JS).
+   Buscá los comentarios "EDITAR ACÁ" para modificar preguntas,
+   respuestas, puntajes o nombres de equipos sin tocar el resto del código.
+   ===================================================================== */
+
+:root{
+  --bg-deep:#0a0518;
+  --bg-mid:#170b33;
+  --bg-mid-2:#231149;
+  --gold:#e8b93b;
+  --gold-soft:#f5d77a;
+  --gold-dim:#8a6a1f;
+  --red:#e63946;
+  --red-dark:#7a1522;
+  --blue:#2563c7;
+  --blue-dark:#122f60;
+  --cream:#f3efe4;
+  --ink:#05030b;
+  --muted:#b9aed6;
+}
+
+*{box-sizing:border-box;}
+html,body{
+  margin:0;
+  padding:0;
+  height:100%;
+  background:var(--bg-deep);
+  color:var(--cream);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  overflow-x:hidden;
+}
+
+body{
+  min-height:100vh;
+  background:
+    radial-gradient(1200px 700px at 50% -10%, var(--bg-mid-2) 0%, var(--bg-deep) 60%),
+    var(--bg-deep);
+  position:relative;
+}
+
+/* Haces de luz de escenario, fijos detrás de todo */
+.stage-lights{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  opacity:.55;
+  background:
+    conic-gradient(from 200deg at 15% -10%, transparent 0deg, rgba(232,185,59,.10) 8deg, transparent 20deg),
+    conic-gradient(from 160deg at 85% -10%, transparent 0deg, rgba(37,99,199,.14) 10deg, transparent 24deg),
+    conic-gradient(from 250deg at 50% -20%, transparent 0deg, rgba(230,57,70,.10) 10deg, transparent 26deg);
+}
+
+.app{
+  position:relative;
+  z-index:1;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:24px 16px 40px;
+}
+
+.screen{
+  display:none;
+  width:100%;
+  max-width:980px;
+  animation:fadeUp .5s ease both;
+}
+.screen.active{display:block;}
+
+@keyframes fadeUp{
+  from{opacity:0; transform:translateY(14px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+/* ---------- Título / marquesina ---------- */
+.marquee-title{
+  text-align:center;
+  font-weight:900;
+  letter-spacing:-1px;
+  line-height:.95;
+  margin:0 0 6px;
+  background:linear-gradient(180deg, var(--gold-soft) 0%, var(--gold) 55%, var(--gold-dim) 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  text-shadow:0 6px 0 rgba(0,0,0,.35);
+  filter:drop-shadow(0 2px 18px rgba(232,185,59,.35));
+}
+.marquee-title.xl{font-size:clamp(38px,8vw,84px);}
+.marquee-title.md{font-size:clamp(26px,5vw,44px);}
+
+.subtitle{
+  text-align:center;
+  color:var(--muted);
+  font-size:clamp(13px,2.2vw,17px);
+  margin:0 0 30px;
+  letter-spacing:.3px;
+}
+
+/* ---------- Botones ---------- */
+.btn-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px;
+  justify-content:center;
+  margin-top:18px;
+}
+
+.btn{
+  border:none;
+  cursor:pointer;
+  font-size:17px;
+  font-weight:700;
+  padding:16px 34px;
+  border-radius:10px;
+  color:var(--ink);
+  background:linear-gradient(180deg, var(--gold-soft), var(--gold));
+  box-shadow:0 4px 0 var(--gold-dim), 0 10px 24px rgba(0,0,0,.45);
+  transition:transform .12s ease, box-shadow .12s ease;
+  min-width:180px;
+}
+.btn:hover{transform:translateY(-2px);}
+.btn:active{transform:translateY(2px); box-shadow:0 1px 0 var(--gold-dim), 0 4px 10px rgba(0,0,0,.4);}
+
+.btn.secondary{
+  background:transparent;
+  color:var(--cream);
+  border:2px solid var(--gold-dim);
+  box-shadow:none;
+}
+.btn.secondary:hover{border-color:var(--gold);}
+
+.btn.small{
+  padding:10px 18px;
+  font-size:14px;
+  min-width:auto;
+}
+
+.btn.danger{
+  background:linear-gradient(180deg,#f27686,var(--red));
+  box-shadow:0 4px 0 var(--red-dark), 0 10px 20px rgba(0,0,0,.4);
+}
+.btn.team-red{background:linear-gradient(180deg,#f27686,var(--red)); box-shadow:0 4px 0 var(--red-dark);}
+.btn.team-blue{background:linear-gradient(180deg,#5b93e6,var(--blue)); box-shadow:0 4px 0 var(--blue-dark);}
+.btn:disabled{opacity:.35; cursor:not-allowed; transform:none;}
+
+/* ---------- Paneles ---------- */
+.panel{
+  background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  border:1px solid rgba(232,185,59,.25);
+  border-radius:16px;
+  padding:26px clamp(16px,4vw,40px);
+  box-shadow:0 20px 50px rgba(0,0,0,.5);
+}
+
+/* ---------- Pantalla de inicio ---------- */
+#screen-inicio .panel{text-align:center;}
+.teams-badge-row{
+  display:flex;
+  justify-content:center;
+  gap:14px;
+  margin-bottom:26px;
+  flex-wrap:wrap;
+}
+.team-badge{
+  font-weight:700;
+  font-size:14px;
+  padding:8px 16px;
+  border-radius:999px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+.team-badge.red{background:rgba(230,57,70,.18); color:#ff9aa4; border:1px solid rgba(230,57,70,.45);}
+.team-badge.blue{background:rgba(37,99,199,.18); color:#8fb6f2; border:1px solid rgba(37,99,199,.45);}
+
+/* ---------- Reglas ---------- */
+.rule-steps{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  margin:22px 0 26px;
+}
+.rule-step{
+  display:flex;
+  gap:16px;
+  align-items:flex-start;
+  background:rgba(0,0,0,.22);
+  border:1px solid rgba(232,185,59,.25);
+  border-radius:12px;
+  padding:16px 18px;
+}
+.rule-step-badge{
+  flex:none;
+  width:54px; height:54px;
+  border-radius:12px;
+  background:linear-gradient(180deg,var(--gold-soft),var(--gold));
+  color:var(--ink);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  line-height:1;
+}
+.rule-step-badge .num{font-size:20px;}
+.rule-step-badge .icon{font-size:16px; margin-top:3px;}
+.rule-step-body{flex:1; min-width:0;}
+.rule-step-title{font-weight:800; font-size:16px; color:var(--gold-soft); margin:0 0 6px;}
+.rule-step-text{font-size:14px; line-height:1.55; color:var(--cream); margin:0;}
+.rule-step-text + .rule-step-text{margin-top:8px;}
+.rule-sublist{margin:6px 0 0; padding-left:20px; color:var(--cream); font-size:14px; line-height:1.6;}
+.rule-sublist li{margin-bottom:4px;}
+.rule-example{
+  margin-top:10px;
+  padding:10px 14px;
+  background:rgba(232,185,59,.08);
+  border-left:3px solid var(--gold);
+  border-radius:0 8px 8px 0;
+  font-size:13.5px;
+  color:var(--muted);
+  font-style:italic;
+}
+.mini-board{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-top:12px;
+  max-width:320px;
+}
+.mini-tile{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:linear-gradient(180deg,var(--gold-soft),var(--gold));
+  color:var(--ink);
+  border-radius:6px;
+  padding:6px 12px;
+  font-weight:700;
+  font-size:13px;
+}
+
+/* ---------- Marcador general (pantalla de juego) ---------- */
+.scoreboard{
+  display:flex;
+  align-items:stretch;
+  gap:0;
+  margin-bottom:22px;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 12px 30px rgba(0,0,0,.5);
+}
+.score-side{
+  flex:1;
+  padding:16px 18px;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.score-side.red{background:linear-gradient(135deg, var(--red-dark), var(--red));}
+.score-side.blue{background:linear-gradient(135deg, var(--blue-dark), var(--blue));}
+.score-side.active-team{outline:3px solid var(--gold); outline-offset:-3px;}
+.score-team-name{font-weight:800; font-size:15px; text-transform:uppercase; letter-spacing:.5px; opacity:.9;}
+.score-points{font-size:clamp(30px,6vw,46px); font-weight:900; line-height:1;}
+.score-mid{
+  width:64px;
+  min-width:64px;
+  background:var(--gold);
+  color:var(--ink);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  font-size:15px;
+  text-align:center;
+  clip-path:polygon(30% 0,100% 0,70% 100%,0% 100%);
+  padding:0 6px;
+}
+.errors-row{display:flex; gap:6px; margin-top:4px;}
+.error-dot{
+  width:20px; height:20px;
+  border-radius:5px;
+  background:rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.3);
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:800;
+}
+.error-dot.filled{background:var(--ink); color:var(--gold);}
+
+/* ---------- Pregunta y tablero ---------- */
+.round-tag{
+  text-align:center;
+  color:var(--gold-soft);
+  font-weight:700;
+  font-size:14px;
+  letter-spacing:1px;
+  margin-bottom:4px;
+}
+.question-banner{
+  text-align:center;
+  font-size:clamp(18px,3.2vw,26px);
+  font-weight:800;
+  color:var(--cream);
+  margin:6px 0 24px;
+  padding:18px 20px;
+  background:rgba(0,0,0,.25);
+  border:1px solid rgba(232,185,59,.3);
+  border-radius:12px;
+}
+
+.board{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-bottom:22px;
+}
+.tile{
+  display:flex;
+  align-items:stretch;
+  border-radius:10px;
+  overflow:hidden;
+  min-height:56px;
+  background:linear-gradient(180deg,#241541,#1a0f33);
+  border:1px solid rgba(232,185,59,.25);
+  cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.tile:hover:not(.revealed){transform:translateY(-2px); box-shadow:0 8px 18px rgba(0,0,0,.4);}
+.tile-num{
+  width:48px; min-width:48px;
+  background:rgba(0,0,0,.35);
+  color:var(--gold-soft);
+  font-weight:900;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px;
+}
+.tile-body{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 18px;
+  font-weight:700;
+  font-size:clamp(14px,2.4vw,18px);
+  color:var(--muted);
+}
+.tile-body .answer-text{visibility:hidden;}
+.tile-body .answer-points{visibility:hidden;}
+.tile.revealed{
+  background:linear-gradient(180deg,var(--gold-soft),var(--gold));
+  cursor:default;
+  animation:flipReveal .45s ease;
+}
+.tile.revealed .tile-num{background:rgba(0,0,0,.15); color:var(--ink);}
+.tile.revealed .tile-body{color:var(--ink);}
+.tile.revealed .tile-body .answer-text,
+.tile.revealed .tile-body .answer-points{visibility:visible;}
+.tile-hint{color:var(--muted); font-size:13px; letter-spacing:.5px;}
+
+@keyframes flipReveal{
+  0%{transform:scaleY(0.05); opacity:.3;}
+  60%{transform:scaleY(1.05);}
+  100%{transform:scaleY(1); opacity:1;}
+}
+
+.round-bank{
+  text-align:center;
+  font-size:15px;
+  color:var(--muted);
+  margin-bottom:18px;
+}
+.round-bank b{color:var(--gold-soft); font-size:20px;}
+
+.controls-grid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  justify-content:center;
+  margin-top:6px;
+}
+
+.hint-box{
+  margin-top:18px;
+  font-size:13px;
+  color:var(--muted);
+  text-align:center;
+  line-height:1.5;
+}
+
+/* ---------- Resumen de ronda / final ---------- */
+.summary-scores{
+  display:flex;
+  gap:20px;
+  justify-content:center;
+  margin:24px 0;
+  flex-wrap:wrap;
+}
+.summary-card{
+  min-width:180px;
+  text-align:center;
+  padding:20px 24px;
+  border-radius:12px;
+}
+.summary-card.red{background:rgba(230,57,70,.15); border:1px solid var(--red);}
+.summary-card.blue{background:rgba(37,99,199,.15); border:1px solid var(--blue);}
+.summary-card .label{font-size:13px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:6px;}
+.summary-card .value{font-size:36px; font-weight:900;}
+
+.winner-banner{
+  text-align:center;
+  font-size:clamp(20px,4vw,30px);
+  font-weight:800;
+  color:var(--gold-soft);
+  margin-bottom:6px;
+}
+
+.trophy{
+  font-size:64px;
+  text-align:center;
+  margin-bottom:10px;
+  filter:drop-shadow(0 0 20px rgba(232,185,59,.6));
+}
+
+/* ---------- Configuración ---------- */
+.config-section{margin-bottom:26px;}
+.config-section h3{
+  color:var(--gold-soft);
+  font-size:18px;
+  margin:0 0 12px;
+  border-bottom:1px solid rgba(232,185,59,.3);
+  padding-bottom:8px;
+}
+.field-row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+  align-items:center;
+}
+.field-row label{
+  min-width:140px;
+  font-size:13px;
+  color:var(--muted);
+}
+input[type="text"], input[type="number"]{
+  background:rgba(0,0,0,.35);
+  border:1px solid rgba(232,185,59,.35);
+  color:var(--cream);
+  padding:9px 12px;
+  border-radius:8px;
+  font-size:14px;
+  flex:1;
+  min-width:120px;
+}
+input[type="number"]{max-width:100px; flex:none;}
+input:focus{outline:2px solid var(--gold); outline-offset:1px;}
+
+.round-editor{
+  border:1px solid rgba(232,185,59,.2);
+  border-radius:12px;
+  padding:16px;
+  margin-bottom:16px;
+  background:rgba(0,0,0,.15);
+}
+.round-editor-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+.round-editor-head span{font-weight:800; color:var(--gold-soft);}
+.answer-editor-row{
+  display:grid;
+  grid-template-columns:28px 1fr 90px;
+  gap:8px;
+  align-items:center;
+  margin-bottom:8px;
+}
+.answer-editor-row span{color:var(--muted); font-size:13px; text-align:center;}
+
+.config-actions{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  justify-content:center;
+  margin-top:20px;
+}
+
+.top-bar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:18px;
+}
+
+.footer-note{
+  text-align:center;
+  color:var(--muted);
+  font-size:12px;
+  margin-top:26px;
+  opacity:.7;
+}
+
+@media (max-width:560px){
+  .field-row label{min-width:100%;}
+  .score-mid{width:44px; min-width:44px; font-size:12px;}
+}
+</style>
+</head>
+<body>
+
+<div class="stage-lights"></div>
+
+<div class="app">
+
+  <!-- ============================================================ -->
+  <!-- PANTALLA: INICIO -->
+  <!-- ============================================================ -->
+  <section id="screen-inicio" class="screen active">
+    <div class="panel">
+      <h1 class="marquee-title xl">100 AMANECIDOS<br>DICEN</h1>
+      <p class="subtitle">Instituto Amanecer &middot; Día del Profesor &middot; 5to Año Pre Promo 2027</p>
+      <div class="teams-badge-row">
+        <span class="team-badge red">🔴 <span id="inicio-nombre-rojo">Equipo Rojo</span></span>
+        <span class="team-badge blue">🔵 <span id="inicio-nombre-azul">Equipo Azul</span></span>
+      </div>
+      <div class="btn-row">
+        <button class="btn" onclick="irA('juego')">Comenzar juego</button>
+        <button class="btn secondary" onclick="irA('reglas')">Ver reglas</button>
+        <button class="btn secondary" onclick="irA('config')">Configuración</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- PANTALLA: REGLAS -->
+  <!-- ============================================================ -->
+  <section id="screen-reglas" class="screen">
+    <div class="panel">
+      <h2 class="marquee-title md">¿Cómo se juega?</h2>
+      <p class="subtitle">Guía paso a paso, inspirada en 100 Argentinos Dicen</p>
+
+      <div class="rule-steps">
+
+        <div class="rule-step">
+          <div class="rule-step-badge"><span class="num">1</span><span class="icon">🔴🔵</span></div>
+          <div class="rule-step-body">
+            <p class="rule-step-title">Se forman dos equipos</p>
+            <p class="rule-step-text">Hay dos equipos que compiten entre sí: 🔴 <span id="reglas-nombre-rojo">Equipo Rojo</span> y 🔵 <span id="reglas-nombre-azul">Equipo Azul</span>. Cada equipo tiene sus participantes, y el objetivo es conseguir la mayor cantidad de puntos.</p>
+          </div>
+        </div>
+
+        <div class="rule-step">
+          <div class="rule-step-badge"><span class="num">2</span><span class="icon">🎤</span></div>
+          <div class="rule-step-body">
+            <p class="rule-step-title">Se presenta una pregunta</p>
+            <p class="rule-step-text">El conductor lee una pregunta a un participante. Las preguntas fueron preparadas previamente y ya tienen respuestas asociadas, ocultas en el tablero.</p>
+            <div class="rule-example">Ejemplo: "Nombrá algo que los argentinos llevan cuando van a la cancha."</div>
+          </div>
+        </div>
+
+        <div class="rule-step">
+          <div class="rule-step-badge"><span class="num">3</span><span class="icon">🙋</span></div>
+          <div class="rule-step-body">
+            <p class="rule-step-title">¡A responder!</p>
+            <ul class="rule-sublist">
+              <li>Un participante debe dar una respuesta.</li>
+              <li>La respuesta tiene que coincidir con una de las respuestas ocultas del tablero.</li>
+              <li>No necesariamente gana la respuesta más rápida: hay que intentar encontrar las respuestas más populares.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="rule-step">
+          <div class="rule-step-badge"><span class="num">4</span><span class="icon">🟨</span></div>
+          <div class="rule-step-body">
+            <p class="rule-step-title">Se revela el tablero</p>
+            <p class="rule-step-text">Cuando una respuesta es correcta, se muestra en el tablero junto con la cantidad de puntos que vale, según su popularidad en la encuesta.</p>
+            <div class="mini-board">
+              <div class="mini-tile"><span>Mate</span><span>35 pts</span></div>
+              <div class="mini-tile"><span>Bandera</span><span>25 pts</span></div>
+              <div class="mini-tile"><span>Termo</span><span>20 pts</span></div>
+              <div class="mini-tile"><span>Gorra</span><span>12 pts</span></div>
+              <div class="mini-tile"><span>Comida</span><span>8 pts</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rule-step">
+          <div class="rule-step-badge"><span class="num">5</span><span class="icon">📊</span></div>
+          <div class="rule-step-body">
+            <p class="rule-step-title">Las respuestas más populares valen más</p>
+            <p class="rule-step-text">La cantidad de puntos representa cuántas personas eligieron esa respuesta en la encuesta. Por eso, encontrar una respuesta que está arriba en el ranking permite conseguir más puntos.</p>
+          </div>
+        </div>
+
+        <div class="rule-step">
+          <div class="rule-step-badge"><span class="num">6</span><span class="icon">❌</span></div>
+          <div class="rule-step-body">
+            <p class="rule-step-title">Los errores</p>
+            <p class="rule-step-text">Si un participante da una respuesta que no está en el tablero, se marca un error ❌. Cada equipo tiene hasta tres errores por ronda. Si un equipo acumula 3 errores, el otro equipo tiene la oportunidad de responder.</p>
+          </div>
+        </div>
+
+        <div class="rule-step">
+          <div class="rule-step-badge"><span class="num">7</span><span class="icon">🏴</span></div>
+          <div class="rule-step-body">
+            <p class="rule-step-title">Robo de puntos</p>
+            <p class="rule-step-text">Después de los 3 errores de un equipo, el equipo contrario tiene una oportunidad de robar la ronda: si acierta una respuesta que todavía está oculta, se lleva todos los puntos acumulados durante esa ronda. Si falla, esos puntos quedan para el equipo que estaba jugando.</p>
+          </div>
+        </div>
+
+        <div class="rule-step">
+          <div class="rule-step-badge"><span class="num">8</span><span class="icon">🏆</span></div>
+          <div class="rule-step-body">
+            <p class="rule-step-title">¿Quién gana?</p>
+            <p class="rule-step-text">Al terminar cada ronda, el conductor confirma qué equipo se lleva los puntos y el marcador general se actualiza. Gana el equipo con más puntos al finalizar todas las rondas.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="btn-row">
+        <button class="btn secondary" onclick="irA('inicio')">Volver al inicio</button>
+        <button class="btn" onclick="irA('juego')">Empezar a jugar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- PANTALLA: CONFIGURACIÓN -->
+  <!-- ============================================================ -->
+  <section id="screen-config" class="screen">
+    <div class="panel">
+      <h2 class="marquee-title md">Configuración</h2>
+
+      <div class="config-section">
+        <h3>Nombres de los equipos</h3>
+        <div class="field-row">
+          <label for="cfg-nombre-rojo">🔴 Nombre equipo rojo</label>
+          <input type="text" id="cfg-nombre-rojo">
+        </div>
+        <div class="field-row">
+          <label for="cfg-nombre-azul">🔵 Nombre equipo azul</label>
+          <input type="text" id="cfg-nombre-azul">
+        </div>
+      </div>
+
+      <div class="config-section">
+        <h3>Rondas, preguntas y respuestas</h3>
+        <div id="config-rounds-container"></div>
+        <div class="btn-row">
+          <button class="btn small secondary" onclick="agregarRonda()">+ Agregar ronda</button>
+        </div>
+      </div>
+
+      <div class="config-actions">
+        <button class="btn" onclick="guardarConfig()">Guardar cambios</button>
+        <button class="btn secondary" onclick="restaurarConfigPorDefecto()">Restaurar valores originales</button>
+        <button class="btn secondary" onclick="irA('inicio')">Volver</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- PANTALLA: JUEGO -->
+  <!-- ============================================================ -->
+  <section id="screen-juego" class="screen">
+    <div class="top-bar">
+      <button class="btn small secondary" onclick="irA('inicio')">⟵ Menú</button>
+      <div class="round-tag" id="juego-round-tag">RONDA 1 DE 3</div>
+      <button class="btn small secondary" onclick="irA('reglas')">Reglas</button>
+    </div>
+
+    <div class="scoreboard">
+      <div class="score-side red" id="scorebox-rojo">
+        <span class="score-team-name" id="score-nombre-rojo">🔴 Equipo Rojo</span>
+        <span class="score-points" id="score-puntos-rojo">0</span>
+        <div class="errors-row" id="errores-rojo"></div>
+      </div>
+      <div class="score-mid">VS</div>
+      <div class="score-side blue" id="scorebox-azul">
+        <span class="score-team-name" id="score-nombre-azul">🔵 Equipo Azul</span>
+        <span class="score-points" id="score-puntos-azul">0</span>
+        <div class="errors-row" id="errores-azul"></div>
+      </div>
+    </div>
+
+    <div class="question-banner" id="pregunta-actual">Pregunta</div>
+
+    <div class="board" id="tablero-respuestas"></div>
+
+    <div class="round-bank">Puntos acumulados en esta ronda: <b id="round-bank-valor">0</b></div>
+
+    <div class="controls-grid">
+      <button class="btn team-red small" id="btn-turno-rojo" onclick="cambiarTurno('rojo')">Turno: Equipo Rojo</button>
+      <button class="btn team-blue small" id="btn-turno-azul" onclick="cambiarTurno('azul')">Turno: Equipo Azul</button>
+      <button class="btn secondary small" onclick="sumarError()">Sumar error al equipo en turno</button>
+      <button class="btn secondary small" onclick="quitarError()">Quitar error al equipo en turno</button>
+      <button class="btn small" onclick="abrirFinalizarRonda()">Finalizar ronda</button>
+    </div>
+
+    <div id="finalizar-ronda-panel" style="display:none; margin-top:18px; text-align:center;">
+      <p style="color:var(--muted); margin-bottom:10px;">¿Qué equipo se lleva los puntos acumulados de esta ronda?</p>
+      <div class="btn-row">
+        <button class="btn team-red small" onclick="finalizarRonda('rojo')">Se los lleva 🔴 Rojo</button>
+        <button class="btn team-blue small" onclick="finalizarRonda('azul')">Se los lleva 🔵 Azul</button>
+        <button class="btn secondary small" onclick="finalizarRonda('nadie')">Nadie (ronda perdida)</button>
+        <button class="btn secondary small" onclick="cerrarFinalizarRonda()">Cancelar</button>
+      </div>
+    </div>
+
+    <p class="hint-box">Hacé clic sobre una respuesta cuando un equipo la acierte para revelarla. Usá los botones de turno y error para llevar el control del juego.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- PANTALLA: RESUMEN DE RONDA -->
+  <!-- ============================================================ -->
+  <section id="screen-resumen" class="screen">
+    <div class="panel" style="text-align:center;">
+      <h2 class="marquee-title md">Fin de la ronda</h2>
+      <p class="subtitle" id="resumen-ganador-ronda"></p>
+      <div class="summary-scores">
+        <div class="summary-card red">
+          <div class="label" id="resumen-nombre-rojo">Equipo Rojo</div>
+          <div class="value" id="resumen-puntos-rojo">0</div>
+        </div>
+        <div class="summary-card blue">
+          <div class="label" id="resumen-nombre-azul">Equipo Azul</div>
+          <div class="value" id="resumen-puntos-azul">0</div>
+        </div>
+      </div>
+      <div class="btn-row" id="resumen-botones"></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- PANTALLA: FINAL -->
+  <!-- ============================================================ -->
+  <section id="screen-final" class="screen">
+    <div class="panel" style="text-align:center;">
+      <div class="trophy">🏆</div>
+      <p class="winner-banner">¡El equipo ganador de 100 Amanecidos Dicen es...!</p>
+      <h2 class="marquee-title xl" id="final-nombre-ganador">EQUIPO</h2>
+      <div class="summary-scores">
+        <div class="summary-card red">
+          <div class="label" id="final-nombre-rojo">Equipo Rojo</div>
+          <div class="value" id="final-puntos-rojo">0</div>
+        </div>
+        <div class="summary-card blue">
+          <div class="label" id="final-nombre-azul">Equipo Azul</div>
+          <div class="value" id="final-puntos-azul">0</div>
+        </div>
+      </div>
+      <p class="subtitle">¡Felicitaciones a los ganadores y gracias a todos por participar!</p>
+      <div class="btn-row">
+        <button class="btn" onclick="jugarNuevamente()">Jugar nuevamente</button>
+        <button class="btn secondary" onclick="irA('inicio')">Volver al inicio</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* =====================================================================
+   DATOS DEL JUEGO — EDITAR ACÁ
+   ---------------------------------------------------------------------
+   Podés cambiar nombres de equipo, preguntas, respuestas y puntajes
+   directamente en este objeto, o hacerlo desde la pantalla de
+   Configuración dentro del juego (recomendado si no sabés programar).
+   Cada ronda necesita: una "pregunta" y una lista "respuestas" con
+   texto y puntos. El orden de las respuestas define el número de
+   casillero en el tablero (1 a 5).
+   ===================================================================== */
+const datosPorDefecto = {
+  nombreRojo: "Equipo Rojo",
+  nombreAzul: "Equipo Azul",
+  rondas: [
+    {
+      pregunta: "Decí algo que representa a la Argentina en el mundo.",
+      respuestas: [
+        { texto: "Fútbol", puntos: 30 },
+        { texto: "Mate",   puntos: 25 },
+        { texto: "Asado",  puntos: 20 },
+        { texto: "Tango",  puntos: 15 },
+        { texto: "Messi",  puntos: 10 }
+      ]
+    },
+    {
+      pregunta: "Decí algo que seguramente encontrás en el Instituto Amanecer.",
+      respuestas: [
+        { texto: "Profesores", puntos: 30 },
+        { texto: "Alumnos",    puntos: 25 },
+        { texto: "Mochilas",   puntos: 20 },
+        { texto: "Aulas",      puntos: 15 },
+        { texto: "Tareas",     puntos: 10 }
+      ]
+    },
+    {
+      pregunta: "Decí algo que hace un profesor cuando faltan pocos minutos para terminar la clase.",
+      respuestas: [
+        { texto: "Mira el reloj",                puntos: 30 },
+        { texto: "Empieza a guardar sus cosas",   puntos: 25 },
+        { texto: "Deja tarea",                    puntos: 20 },
+        { texto: "Dice 'una última cosa'",        puntos: 15 },
+        { texto: "Se despide",                    puntos: 10 }
+      ]
+    }
+  ]
+};
+
+/* Clave usada para guardar la configuración en este navegador */
+const CLAVE_GUARDADO = "cien_amanecidos_dicen_config_v1";
+
+/* Estado general de datos (puede haber sido editado en Configuración) */
+let datosJuego = cargarConfigGuardada() || JSON.parse(JSON.stringify(datosPorDefecto));
+
+/* Estado de una partida en curso */
+let estado = crearEstadoInicial();
+
+function crearEstadoInicial(){
+  return {
+    rondaActual: 0,
+    puntosTotales: { rojo: 0, azul: 0 },
+    bancoRonda: 0,
+    equipoEnTurno: "rojo",
+    errores: { rojo: 0, azul: 0 },
+    respuestasReveladas: []
+  };
+}
+
+/* --------------------------- Navegación --------------------------- */
+function irA(idPantalla){
+  document.querySelectorAll(".screen").forEach(function(s){ s.classList.remove("active"); });
+  document.getElementById("screen-" + idPantalla).classList.add("active");
+  if(idPantalla === "juego"){ renderizarJuego(); }
+  if(idPantalla === "config"){ renderizarConfig(); }
+  if(idPantalla === "inicio"){ actualizarBadgesInicio(); }
+  if(idPantalla === "reglas"){ actualizarNombresReglas(); }
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function actualizarBadgesInicio(){
+  document.getElementById("inicio-nombre-rojo").textContent = datosJuego.nombreRojo;
+  document.getElementById("inicio-nombre-azul").textContent = datosJuego.nombreAzul;
+}
+
+function actualizarNombresReglas(){
+  document.getElementById("reglas-nombre-rojo").textContent = datosJuego.nombreRojo;
+  document.getElementById("reglas-nombre-azul").textContent = datosJuego.nombreAzul;
+}
+
+/* --------------------------- Pantalla de juego --------------------------- */
+function renderizarJuego(){
+  const ronda = datosJuego.rondas[estado.rondaActual];
+  document.getElementById("juego-round-tag").textContent =
+    "RONDA " + (estado.rondaActual + 1) + " DE " + datosJuego.rondas.length;
+
+  document.getElementById("score-nombre-rojo").textContent = "🔴 " + datosJuego.nombreRojo;
+  document.getElementById("score-nombre-azul").textContent = "🔵 " + datosJuego.nombreAzul;
+  document.getElementById("score-puntos-rojo").textContent = estado.puntosTotales.rojo;
+  document.getElementById("score-puntos-azul").textContent = estado.puntosTotales.azul;
+
+  document.getElementById("pregunta-actual").textContent = ronda.pregunta;
+  document.getElementById("round-bank-valor").textContent = estado.bancoRonda;
+
+  renderizarErrores();
+  renderizarTablero();
+  actualizarBotonesTurno();
+
+  document.getElementById("finalizar-ronda-panel").style.display = "none";
+}
+
+function renderizarErrores(){
+  ["rojo","azul"].forEach(function(equipo){
+    const cont = document.getElementById("errores-" + equipo);
+    cont.innerHTML = "";
+    for(let i=0;i<3;i++){
+      const d = document.createElement("div");
+      d.className = "error-dot" + (i < estado.errores[equipo] ? " filled" : "");
+      d.textContent = i < estado.errores[equipo] ? "✕" : "";
+      cont.appendChild(d);
+    }
+  });
+  document.getElementById("scorebox-rojo").classList.toggle("active-team", estado.equipoEnTurno === "rojo");
+  document.getElementById("scorebox-azul").classList.toggle("active-team", estado.equipoEnTurno === "azul");
+}
+
+function renderizarTablero(){
+  const ronda = datosJuego.rondas[estado.rondaActual];
+  const tablero = document.getElementById("tablero-respuestas");
+  tablero.innerHTML = "";
+  ronda.respuestas.forEach(function(resp, idx){
+    const revelada = estado.respuestasReveladas.includes(idx);
+    const tile = document.createElement("div");
+    tile.className = "tile" + (revelada ? " revealed" : "");
+    tile.onclick = function(){ revelarRespuesta(idx); };
+    tile.innerHTML =
+      '<div class="tile-num">' + (idx+1) + '</div>' +
+      '<div class="tile-body">' +
+        '<span class="answer-text">' + resp.texto + '</span>' +
+        (revelada ? '' : '<span class="tile-hint">Toca para revelar</span>') +
+        '<span class="answer-points">' + resp.puntos + ' pts</span>' +
+      '</div>';
+    tablero.appendChild(tile);
+  });
+}
+
+function revelarRespuesta(idx){
+  if(estado.respuestasReveladas.includes(idx)) return; // ya fue mencionada, no suma puntos
+  estado.respuestasReveladas.push(idx);
+  const ronda = datosJuego.rondas[estado.rondaActual];
+  estado.bancoRonda += ronda.respuestas[idx].puntos;
+  renderizarJuego();
+}
+
+function cambiarTurno(equipo){
+  estado.equipoEnTurno = equipo;
+  renderizarErrores();
+  actualizarBotonesTurno();
+}
+
+function actualizarBotonesTurno(){
+  document.getElementById("btn-turno-rojo").style.outline = estado.equipoEnTurno === "rojo" ? "3px solid var(--gold)" : "none";
+  document.getElementById("btn-turno-azul").style.outline = estado.equipoEnTurno === "azul" ? "3px solid var(--gold)" : "none";
+}
+
+function sumarError(){
+  const eq = estado.equipoEnTurno;
+  if(estado.errores[eq] < 3){
+    estado.errores[eq]++;
+    renderizarErrores();
+  }
+}
+function quitarError(){
+  const eq = estado.equipoEnTurno;
+  if(estado.errores[eq] > 0){
+    estado.errores[eq]--;
+    renderizarErrores();
+  }
+}
+
+function abrirFinalizarRonda(){
+  document.getElementById("finalizar-ronda-panel").style.display = "block";
+}
+function cerrarFinalizarRonda(){
+  document.getElementById("finalizar-ronda-panel").style.display = "none";
+}
+
+function finalizarRonda(equipoGanador){
+  if(equipoGanador === "rojo") estado.puntosTotales.rojo += estado.bancoRonda;
+  if(equipoGanador === "azul") estado.puntosTotales.azul += estado.bancoRonda;
+
+  document.getElementById("resumen-nombre-rojo").textContent = datosJuego.nombreRojo;
+  document.getElementById("resumen-nombre-azul").textContent = datosJuego.nombreAzul;
+  document.getElementById("resumen-puntos-rojo").textContent = estado.puntosTotales.rojo;
+  document.getElementById("resumen-puntos-azul").textContent = estado.puntosTotales.azul;
+
+  let textoGanador;
+  if(equipoGanador === "nadie"){
+    textoGanador = "Nadie se llevó los puntos de esta ronda.";
+  } else {
+    const nombre = equipoGanador === "rojo" ? datosJuego.nombreRojo : datosJuego.nombreAzul;
+    textoGanador = nombre + " se lleva " + estado.bancoRonda + " puntos de esta ronda.";
+  }
+  if(estado.puntosTotales.rojo !== estado.puntosTotales.azul){
+    const vaGanando = estado.puntosTotales.rojo > estado.puntosTotales.azul ? datosJuego.nombreRojo : datosJuego.nombreAzul;
+    textoGanador += " Va ganando: " + vaGanando + ".";
+  } else {
+    textoGanador += " Están empatados.";
+  }
+  document.getElementById("resumen-ganador-ronda").textContent = textoGanador;
+
+  const esUltimaRonda = estado.rondaActual >= datosJuego.rondas.length - 1;
+  const botones = document.getElementById("resumen-botones");
+  botones.innerHTML = "";
+  if(esUltimaRonda){
+    const b = document.createElement("button");
+    b.className = "btn";
+    b.textContent = "Ver resultado final";
+    b.onclick = mostrarFinal;
+    botones.appendChild(b);
+  } else {
+    const b = document.createElement("button");
+    b.className = "btn";
+    b.textContent = "Siguiente ronda";
+    b.onclick = siguienteRonda;
+    botones.appendChild(b);
+  }
+
+  irA("resumen");
+}
+
+function siguienteRonda(){
+  estado.rondaActual++;
+  estado.bancoRonda = 0;
+  estado.errores = { rojo:0, azul:0 };
+  estado.respuestasReveladas = [];
+  estado.equipoEnTurno = "rojo";
+  irA("juego");
+}
+
+function mostrarFinal(){
+  document.getElementById("final-nombre-rojo").textContent = datosJuego.nombreRojo;
+  document.getElementById("final-nombre-azul").textContent = datosJuego.nombreAzul;
+  document.getElementById("final-puntos-rojo").textContent = estado.puntosTotales.rojo;
+  document.getElementById("final-puntos-azul").textContent = estado.puntosTotales.azul;
+
+  let ganador;
+  if(estado.puntosTotales.rojo === estado.puntosTotales.azul){
+    ganador = "¡EMPATE!";
+  } else if(estado.puntosTotales.rojo > estado.puntosTotales.azul){
+    ganador = datosJuego.nombreRojo.toUpperCase();
+  } else {
+    ganador = datosJuego.nombreAzul.toUpperCase();
+  }
+  document.getElementById("final-nombre-ganador").textContent = ganador;
+  irA("final");
+}
+
+function jugarNuevamente(){
+  estado = crearEstadoInicial();
+  irA("inicio");
+}
+
+/* --------------------------- Configuración --------------------------- */
+function renderizarConfig(){
+  document.getElementById("cfg-nombre-rojo").value = datosJuego.nombreRojo;
+  document.getElementById("cfg-nombre-azul").value = datosJuego.nombreAzul;
+
+  const cont = document.getElementById("config-rounds-container");
+  cont.innerHTML = "";
+  datosJuego.rondas.forEach(function(ronda, ri){
+    const div = document.createElement("div");
+    div.className = "round-editor";
+    let respuestasHtml = "";
+    ronda.respuestas.forEach(function(r, ai){
+      respuestasHtml +=
+        '<div class="answer-editor-row">' +
+          '<span>' + (ai+1) + '</span>' +
+          '<input type="text" data-ronda="'+ri+'" data-resp="'+ai+'" data-campo="texto" value="'+escapeHtml(r.texto)+'">' +
+          '<input type="number" data-ronda="'+ri+'" data-resp="'+ai+'" data-campo="puntos" value="'+r.puntos+'" min="0">' +
+        '</div>';
+    });
+    div.innerHTML =
+      '<div class="round-editor-head">' +
+        '<span>Ronda ' + (ri+1) + '</span>' +
+        '<button class="btn small danger" onclick="eliminarRonda('+ri+')">Eliminar ronda</button>' +
+      '</div>' +
+      '<div class="field-row">' +
+        '<label>Pregunta</label>' +
+        '<input type="text" data-ronda="'+ri+'" data-campo="pregunta" value="'+escapeHtml(ronda.pregunta)+'">' +
+      '</div>' +
+      respuestasHtml;
+    cont.appendChild(div);
+  });
+}
+
+function escapeHtml(str){
+  return String(str).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function agregarRonda(){
+  datosJuego.rondas.push({
+    pregunta: "Nueva pregunta",
+    respuestas: [
+      {texto:"Respuesta 1", puntos:30},
+      {texto:"Respuesta 2", puntos:25},
+      {texto:"Respuesta 3", puntos:20},
+      {texto:"Respuesta 4", puntos:15},
+      {texto:"Respuesta 5", puntos:10}
+    ]
+  });
+  renderizarConfig();
+}
+
+function eliminarRonda(ri){
+  if(datosJuego.rondas.length <= 1){
+    alert("Debe quedar al menos una ronda.");
+    return;
+  }
+  datosJuego.rondas.splice(ri,1);
+  renderizarConfig();
+}
+
+function guardarConfig(){
+  // Leer nombres de equipo
+  datosJuego.nombreRojo = document.getElementById("cfg-nombre-rojo").value.trim() || "Equipo Rojo";
+  datosJuego.nombreAzul = document.getElementById("cfg-nombre-azul").value.trim() || "Equipo Azul";
+
+  // Leer pregunta por ronda
+  document.querySelectorAll('#config-rounds-container input[data-campo="pregunta"]').forEach(function(inp){
+    const ri = parseInt(inp.dataset.ronda,10);
+    datosJuego.rondas[ri].pregunta = inp.value;
+  });
+  // Leer texto de respuestas
+  document.querySelectorAll('#config-rounds-container input[data-campo="texto"]').forEach(function(inp){
+    const ri = parseInt(inp.dataset.ronda,10);
+    const ai = parseInt(inp.dataset.resp,10);
+    datosJuego.rondas[ri].respuestas[ai].texto = inp.value;
+  });
+  // Leer puntos de respuestas
+  document.querySelectorAll('#config-rounds-container input[data-campo="puntos"]').forEach(function(inp){
+    const ri = parseInt(inp.dataset.ronda,10);
+    const ai = parseInt(inp.dataset.resp,10);
+    datosJuego.rondas[ri].respuestas[ai].puntos = parseInt(inp.value,10) || 0;
+  });
+
+  guardarConfigEnStorage();
+  alert("Configuración guardada. Los cambios se aplicarán al iniciar una nueva partida.");
+  irA("inicio");
+}
+
+function restaurarConfigPorDefecto(){
+  if(!confirm("¿Restaurar las preguntas, respuestas y nombres originales?")) return;
+  datosJuego = JSON.parse(JSON.stringify(datosPorDefecto));
+  guardarConfigEnStorage();
+  renderizarConfig();
+}
+
+function guardarConfigEnStorage(){
+  try{
+    localStorage.setItem(CLAVE_GUARDADO, JSON.stringify(datosJuego));
+  }catch(e){ /* localStorage no disponible: la config no persiste al recargar, pero el juego sigue funcionando */ }
+}
+
+function cargarConfigGuardada(){
+  try{
+    const guardado = localStorage.getItem(CLAVE_GUARDADO);
+    return guardado ? JSON.parse(guardado) : null;
+  }catch(e){
+    return null;
+  }
+}
+
+/* Inicialización */
+actualizarBadgesInicio();
+</script>
+
+</body>
+</html>
